@@ -17,45 +17,49 @@ transform = transforms.Compose([ transforms.ToTensor(), transforms.Normalize((0.
 train_data = datasets.CIFAR10('data', train=True, download=True, transform=transform)
 test_data = datasets.CIFAR10('data', train=False, download=True, transform=transform)
 # You should define x_train and y_train
-x_train = train_data.data
-y_train = train_data.targets
+# x_train = train_data.data
+# y_train = train_data.targets
 
-# batch_size = 32
+batch_size = 32
 
-# trainloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
+trainloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
 
-# testloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False)
+testloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False)
+
 
 class ReLU:
     def forward(self, inputs):
-        # Implement the ReLU formula
         self.inputs = inputs
-        return np.maximum(0, inputs)
+        # Implement the ReLU formula
+        self.output = np.maximum(0, inputs)
+        return self.output
 
     def backward(self, b_input):
         # Implement the ReLU derivative with respect to the input
         derivative = np.where(self.inputs > 0, 1, 0)
-        return derivative * b_input
+        self.b_output = derivative * b_input
+        return self.b_output
 
 
 class Sigmoid:
     def forward(self, inputs):
         # Implement the sigmoid formula
-        self.outputs = 1 / (1 + np.exp(-inputs))
-        return self.outputs
+        self.output = 1 / (1 + np.exp(-inputs))
+        return self.output
 
     def backward(self, b_input):
         # Implement the sigmoid derivative with respect to the input
-        derivative = self.outputs * (1 - self.outputs)
-        return derivative * b_input
+        derivative = self.output * (1 - self.output)
+        self.b_output = derivative * b_input
+        return self.b_output
 
 
 class Softmax:
     def forward(self, inputs):
         # Implement the softmax formula
         exp_inputs = np.exp(inputs - np.max(inputs, axis=1, keepdims=True))
-        self.outputs = exp_inputs / np.sum(exp_inputs, axis=1, keepdims=True)
-        return self.outputs
+        self.output = exp_inputs / np.sum(exp_inputs, axis=1, keepdims=True)
+        return self.output
 
     def backward(self, b_input):
         # Implement the softmax derivative with respect to the input
@@ -65,24 +69,27 @@ class Softmax:
             for j in range(b_input.shape[1]):
                 for k in range(b_input.shape[1]):
                     if j == k:
-                        jacobian_matrix[i][j][k] = self.outputs[i][j] * (1 - self.outputs[i][k])
+                        jacobian_matrix[i][j][k] = self.output[i][j] * (1 - self.output[i][k])
                     else:
-                        jacobian_matrix[i][j][k] = -self.outputs[i][j] * self.outputs[i][k]
-        return np.matmul(b_input[:, np.newaxis, :], jacobian_matrix).squeeze()
+                        jacobian_matrix[i][j][k] = -self.output[i][j] * self.output[i][k]
+        self.b_output = np.matmul(b_input[:, np.newaxis, :], jacobian_matrix).squeeze()
+        return self.b_output
 
 
 class Categorical_Cross_Entropy_loss:
     def forward(self,softmax_output,class_label):
         num_samples = class_label.shape[0]
         loss = -np.log(softmax_output[range(num_samples),class_label]).mean()
-        return loss
+        self.output = loss
+        return self.output
 
     def backward(self,softmax_output,class_label):
         num_samples = class_label.shape[0]
         grad = softmax_output
         grad[range(num_samples),class_label] -= 1
         grad /= num_samples
-        return grad
+        self.b_output = grad
+        return self.b_output
 
 
 class SGD:
@@ -90,27 +97,28 @@ class SGD:
         self.learning_rate = learning_rate
         
     def update(self,layer):
-        layer.weights -= self.learning_rate * layer.grad_wrt_weights
-        layer.bias -= self.learning_rate * layer.grad_wrt_bias
+        layer.weights -= self.learning_rate * layer.b_weights
+        layer.biases -= self.learning_rate * layer.b_biases
 
         
 class Dense:
     def __init__(self, n_inputs, n_neurons):
         # Initialize weights with random values and biases with zeros
-        self.weights = np.random.randn(n_inputs, n_neurons)
+        self.weights = np.random.randn(n_inputs, n_neurons) * 0.01
         self.biases = np.zeros(n_neurons)
 
     def forward(self, inputs):
         # Compute the dot product of input and weight matrix, add bias, and apply activation function
+        self.inputs = inputs
         self.output = np.dot(inputs, self.weights) + self.biases
         return self.output
 
     def backward(self, b_input):
         # Compute gradients of weights and biases
-        inputs = b_input.T
-        self.weight_gradients = np.dot(inputs, self.output)
-        self.bias_gradients = np.sum(inputs, axis=0)
-        return self.weight_gradients, self.bias_gradients
+        self.b_weights = np.dot(self.inputs.T, b_input)
+        self.b_biases = np.sum(b_input, axis=0, keepdims=False)
+        self.b_output = np.dot(b_input, self.weights.T)
+        return self.b_output
 
 
 feature_extractor = resnet34(pretrained=True)
@@ -123,7 +131,7 @@ Act1 = ReLU()
 Layer2 = Dense(20, 10)
 Act2 = Softmax()
 
-# summary(feature_extractor)
+# summary(feature_extractor, (32,32,3))
 
 
 Loss = Categorical_Cross_Entropy_loss()
@@ -134,16 +142,24 @@ for param in feature_extractor.parameters():
     param.requires_grad = False
 feature_extractor.fc.requires_grad = True
 
-
-batch_size = 32
 #Main Loop of Training
 for epoch in range(20):
+  # loss = 0
+  for i, (x_train, y_train) in enumerate(trainloader):
+    # Convert the input image to a PyTorch tensor
+    input_tensor = torch.tensor(x_train).float()
+
+    # Add a batch dimension to the input tensor
+    input_tensor = input_tensor.unsqueeze(0)
+
+    output = feature_extractor(*input_tensor)
+
     #forward
-    Layer1.forward(x_train)
+    Layer1.forward(output)
     Act1.forward(Layer1.output)
     Layer2.forward(Act1.output)
     Act2.forward(Layer2.output)
-    loss = Loss.forward(Act2.output,y_1hot)
+    loss = Loss.forward(Act2.output,y_train)
     
     # Report
     y_predict = np.argmax(Act2.output,axis = 1)
@@ -154,7 +170,7 @@ for epoch in range(20):
     print('--------------------------')
     
     #backward
-    Loss.backward(Act2.output,y_1hot)
+    Loss.backward(Act2.output,y_train)
     Act2.backward(Loss.b_output)
     Layer2.backward(Act2.b_output)
     Act1.backward(Layer2.b_output)
@@ -163,6 +179,7 @@ for epoch in range(20):
     #update params
     Optimizer.update(Layer1)
     Optimizer.update(Layer2)
+  
 
 #Confusion Matrix for the training set
 cm_train = confusion_matrix(y_train, y_predict)
