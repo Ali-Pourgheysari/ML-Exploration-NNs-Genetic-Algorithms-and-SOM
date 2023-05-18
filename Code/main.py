@@ -114,13 +114,28 @@ class Dense:
 
 
 feature_extractor = resnet34(pretrained=True)
-Layer1 = Dense(d,20) # d is the output dimension of feature extractor
+num_features = feature_extractor.fc.in_features
+feature_extractor.fc = nn.Identity()
+
+
+Layer1 = Dense(num_features, 20)
 Act1 = ReLU()
-Layer2 = Dense(20,10)
+Layer2 = Dense(20, 10)
 Act2 = Softmax()
+
+# summary(feature_extractor)
+
+
 Loss = Categorical_Cross_Entropy_loss()
 Optimizer = SGD(learning_rate=0.001)
 
+# Freeze all layers except the last layer
+for param in feature_extractor.parameters():
+    param.requires_grad = False
+feature_extractor.fc.requires_grad = True
+
+
+batch_size = 32
 #Main Loop of Training
 for epoch in range(20):
     #forward
