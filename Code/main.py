@@ -27,39 +27,72 @@ y_train = train_data.targets
 # testloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
 class ReLU:
-    def forward(self,inputs):
-        # // To do: Implement the ReLU formula
+    def forward(self, inputs):
+        # Implement the ReLU formula
+        self.inputs = inputs
+        return np.maximum(0, inputs)
 
-    def backward(self,b_input):
-        # // To do: Implement the ReLU derivative with respect to the input
+    def backward(self, b_input):
+        # Implement the ReLU derivative with respect to the input
+        derivative = np.where(self.inputs > 0, 1, 0)
+        return derivative * b_input
+
 
 class Sigmoid:
-    def forward(self,inputs):
-        # // To do: Implement the sigmoid formula
+    def forward(self, inputs):
+        # Implement the sigmoid formula
+        self.outputs = 1 / (1 + np.exp(-inputs))
+        return self.outputs
 
-    def backward(self,b_input):
-        # // To do: Implement the sigmoid derivative with respect to the input
+    def backward(self, b_input):
+        # Implement the sigmoid derivative with respect to the input
+        derivative = self.outputs * (1 - self.outputs)
+        return derivative * b_input
+
 
 class Softmax:
-    def forward(self,inputs):
-        # // To do: Implement the softmax formula
-    
-    def backward(self,b_input):
-        # // To do: Implement the softmax derivative with respect to the input
+    def forward(self, inputs):
+        # Implement the softmax formula
+        exp_inputs = np.exp(inputs - np.max(inputs, axis=1, keepdims=True))
+        self.outputs = exp_inputs / np.sum(exp_inputs, axis=1, keepdims=True)
+        return self.outputs
+
+    def backward(self, b_input):
+        # Implement the softmax derivative with respect to the input
+        batch_size = b_input.shape[0]
+        jacobian_matrix = np.zeros((batch_size, b_input.shape[1], b_input.shape[1]))
+        for i in range(batch_size):
+            for j in range(b_input.shape[1]):
+                for k in range(b_input.shape[1]):
+                    if j == k:
+                        jacobian_matrix[i][j][k] = self.outputs[i][j] * (1 - self.outputs[i][k])
+                    else:
+                        jacobian_matrix[i][j][k] = -self.outputs[i][j] * self.outputs[i][k]
+        return np.matmul(b_input[:, np.newaxis, :], jacobian_matrix).squeeze()
+
 
 class Categorical_Cross_Entropy_loss:
     def forward(self,softmax_output,class_label):
-        # // To do: Implement the CCE loss formula
+        num_samples = class_label.shape[0]
+        loss = -np.log(softmax_output[range(num_samples),class_label]).mean()
+        return loss
 
     def backward(self,softmax_output,class_label):
-        # // To do: Implement the CCE loss derivative with respect to predicted label
+        num_samples = class_label.shape[0]
+        grad = softmax_output
+        grad[range(num_samples),class_label] -= 1
+        grad /= num_samples
+        return grad
+
 
 class SGD:
     def __init__(self,learning_rate = 0.001):
         self.learning_rate = learning_rate
         
     def update(self,layer):
-        # // To do: Update layer params based on gradient descent rule
+        layer.weights -= self.learning_rate * layer.grad_wrt_weights
+        layer.bias -= self.learning_rate * layer.grad_wrt_bias
+
         
 class Dense:
     def __init__(self,n_inputs,n_neurons):
