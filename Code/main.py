@@ -84,10 +84,9 @@ class Categorical_Cross_Entropy_loss:
         return self.output
 
     def backward(self,softmax_output,class_label):
-        num_samples = class_label.shape[0]
-        grad = softmax_output
-        grad[range(num_samples),class_label] -= 1
-        grad /= num_samples
+        grad_softmax = softmax_output.copy()
+        grad_softmax[range(len(class_label)), class_label] -= 1
+        grad = grad_softmax / len(class_label)
         self.b_output = grad
         return self.b_output
 
