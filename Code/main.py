@@ -95,14 +95,23 @@ class SGD:
 
         
 class Dense:
-    def __init__(self,n_inputs,n_neurons):
-        # // To do: Define initial weight and bias
-    
-    def forward(self,inputs):
-        # // To do: Define input and output
+    def __init__(self, n_inputs, n_neurons):
+        # Initialize weights with random values and biases with zeros
+        self.weights = np.random.randn(n_inputs, n_neurons)
+        self.biases = np.zeros(n_neurons)
 
-    def backward(self,b_input):
-        # // To do: Weight and bias gradients
+    def forward(self, inputs):
+        # Compute the dot product of input and weight matrix, add bias, and apply activation function
+        self.output = np.dot(inputs, self.weights) + self.biases
+        return self.output
+
+    def backward(self, b_input):
+        # Compute gradients of weights and biases
+        inputs = b_input.T
+        self.weight_gradients = np.dot(inputs, self.output)
+        self.bias_gradients = np.sum(inputs, axis=0)
+        return self.weight_gradients, self.bias_gradients
+
 
 feature_extractor = resnet34(pretrained=True)
 Layer1 = Dense(d,20) # d is the output dimension of feature extractor
