@@ -1,4 +1,31 @@
-import 
+import numpy as np
+import matplotlib.pyplot as plt
+# torch is just for the feature extractor and the dataset (NOT FOR IMPLEMENTING NEURAL NETWORKS!)
+import torch
+from torchsummary import summary
+import torch.nn as nn
+from torchvision import datasets
+import torchvision.transforms as transforms
+from torchvision.models import resnet34
+# sklearn is just for evaluation (NOT FOR IMPLEMENTING NEURAL NETWORKS!)
+from sklearn.metrics import confusion_matrix, f1_score
+
+# convert data to a normalized torch.FloatTensor
+transform = transforms.Compose([ transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+# choose the training and test datasets
+train_data = datasets.CIFAR10('data', train=True, download=True, transform=transform)
+test_data = datasets.CIFAR10('data', train=False, download=True, transform=transform)
+# You should define x_train and y_train
+x_train = train_data.data
+y_train = train_data.targets
+
+# batch_size = 32
+
+# trainloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
+
+# testloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False)
+
 class ReLU:
     def forward(self,inputs):
         # // To do: Implement the ReLU formula
@@ -34,6 +61,16 @@ class SGD:
     def update(self,layer):
         # // To do: Update layer params based on gradient descent rule
         
+class Dense:
+    def __init__(self,n_inputs,n_neurons):
+        # // To do: Define initial weight and bias
+    
+    def forward(self,inputs):
+        # // To do: Define input and output
+
+    def backward(self,b_input):
+        # // To do: Weight and bias gradients
+
 feature_extractor = resnet34(pretrained=True)
 Layer1 = Dense(d,20) # d is the output dimension of feature extractor
 Act1 = ReLU()
