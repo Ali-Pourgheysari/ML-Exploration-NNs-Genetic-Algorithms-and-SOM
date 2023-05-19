@@ -39,4 +39,15 @@ for i in range(10):
     mul = [a*b for a,b in zip(mask, cifar_labels)]
     label_counts = np.bincount(mul)
     print(f"Cluster {i}: Label Scatter = {label_counts}")
-    
+
+# B
+# som_net = MiniBatchKMeans(n_clusters=10, random_state=0, batch_size=100, max_iter=20, init='k-means++', reassignment_ratio=0.01,
+#                           max_no_improvement=None, verbose=0, compute_labels=True, n_init=3,
+#                           init_size=None, batch_size=100, verbose=0, max_no_improvement=None, reassignment_ratio=0.01,
+#                           random_state=None, tol=0.0, max_iter=20, som_topology='P', som_shape=(2, 5), neighborhood_diameter=1)
+
+# C
+# som_net = MiniBatchKMeans(n_clusters=10, random_state=0, batch_size=100, max_iter=20, init='k-means++', reassignment_ratio=0.01,
+                        #   max_no_improvement=None, verbose=0, compute_labels=True, n_init=3,
+                        #   init_size=None, batch_size=100, verbose=0, max_no_improvement=None, reassignment_ratio=0.01,
+                        #   random_state=None, tol=0.0, max_iter=20, som_topology='P', som_shape=(2, 5), neighborhood_diameter=1)
