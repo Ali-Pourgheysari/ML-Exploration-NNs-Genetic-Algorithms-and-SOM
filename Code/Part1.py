@@ -111,7 +111,7 @@ train_data = datasets.CIFAR10('data', train=True, download=True, transform=trans
 test_data = datasets.CIFAR10('data', train=False, download=True, transform=transform)
 # You should define x_train and y_train
 
-batch_size = 32
+batch_size = 64
 
 trainloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
 
@@ -231,12 +231,7 @@ plt.ylabel("Actual")
 plt.title("Confusion Matrix for the training set")
 plt.show()
 
-# Calculate the precision and recall for each class
-precision = np.diag(cm_train) / np.sum(cm_train, axis=0)
-recall = np.diag(cm_train) / np.sum(cm_train, axis=1)
-
-# Calculate the F1 score for each class
-f1 = 2 * (precision * recall) / (precision + recall)
+print(f1_score(y_train_plot, y_predicted_plot, average='weighted'))
 
 #Confusion Matrix for the test set
 cm_test = confusion_matrix(y_test_plot_t, y_predicted_plot_t)
@@ -247,9 +242,4 @@ plt.ylabel("Actual")
 plt.title("Confusion Matrix for the testing set")
 plt.show()
 
-# Calculate the precision and recall for each class
-precision = np.diag(cm_test) / np.sum(cm_test, axis=0)
-recall = np.diag(cm_test) / np.sum(cm_test, axis=1)
-
-# Calculate the F1 score for each class
-f1 = 2 * (precision * recall) / (precision + recall)
+print(f1_score(y_test_plot_t, y_predicted_plot_t, average='weighted'))
