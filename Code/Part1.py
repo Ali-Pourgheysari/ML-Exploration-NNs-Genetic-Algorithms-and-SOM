@@ -231,7 +231,6 @@ plt.ylabel("Actual")
 plt.title("Confusion Matrix for the training set")
 plt.show()
 
-print(f1_score(y_train_plot, y_predicted_plot, average='weighted'))
 
 #Confusion Matrix for the test set
 cm_test = confusion_matrix(y_test_plot_t, y_predicted_plot_t)
@@ -242,4 +241,5 @@ plt.ylabel("Actual")
 plt.title("Confusion Matrix for the testing set")
 plt.show()
 
-print(f1_score(y_test_plot_t, y_predicted_plot_t, average='weighted'))
+print(f"f1 score of training: {f1_score(y_train_plot, y_predicted_plot, average='weighted')}")
+print(f"f1 score of testing: {f1_score(y_test_plot_t, y_predicted_plot_t, average='weighted')}")
