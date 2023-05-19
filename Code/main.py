@@ -79,11 +79,12 @@ class Softmax:
 class Categorical_Cross_Entropy_loss:
     def forward(self,softmax_output,class_label):
         num_samples = class_label.shape[0]
-        loss = -np.log(softmax_output[range(num_samples),class_label]).mean()
+        epsilon = 1e-10 # To prevent division by zero errors
+        loss = -np.log(softmax_output[range(num_samples),class_label] + epsilon).mean()
         self.output = loss
         return self.output
 
-    def backward(self,softmax_output,class_label):
+    def backward(self,softmax_output, class_label):
         grad_softmax = softmax_output.copy()
         grad_softmax[range(len(class_label)), class_label] -= 1
         grad = grad_softmax / len(class_label)
@@ -147,10 +148,9 @@ for epoch in range(20):
   for i, (x_train, y_train) in enumerate(trainloader):
     # Convert the input image to a PyTorch tensor
     input_tensor = torch.tensor(x_train).float()
-
     # Add a batch dimension to the input tensor
     input_tensor = input_tensor.unsqueeze(0)
-
+    # print(f'row: {len(input_tensor)}, col: {len(input_tensor[0])}')
     output = feature_extractor(*input_tensor)
 
     #forward
