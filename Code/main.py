@@ -225,7 +225,7 @@ for i, (x_test, y_test) in enumerate(testloader):
     accuracy = (counter / batch_size) * 100
     if accuracy > maximum:
       maximum = accuracy
-    print(f'epoch: {epoch}, batch: {c} of {50000//batch_size}, {accuracy}%, max: {maximum}%')
+    print(f'epoch: {epoch}, batch: {c} of {5000//batch_size}, {accuracy}%, max: {maximum}%')
     print(f'Loss: {loss}')
     print('--------------------------')
     
