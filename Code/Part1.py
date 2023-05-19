@@ -3,30 +3,12 @@ import matplotlib.pyplot as plt
 import seaborn as sb
 # torch is just for the feature extractor and the dataset (NOT FOR IMPLEMENTING NEURAL NETWORKS!)
 import torch
-from torchsummary import summary
 import torch.nn as nn
 from torchvision import datasets
 import torchvision.transforms as transforms
 from torchvision.models import resnet34
 # sklearn is just for evaluation (NOT FOR IMPLEMENTING NEURAL NETWORKS!)
 from sklearn.metrics import confusion_matrix, f1_score
-
-# convert data to a normalized torch.FloatTensor
-transform = transforms.Compose([ transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
-# choose the training and test datasets
-train_data = datasets.CIFAR10('data', train=True, download=True, transform=transform)
-test_data = datasets.CIFAR10('data', train=False, download=True, transform=transform)
-# You should define x_train and y_train
-# x_train = train_data.data
-# y_train = train_data.targets
-
-batch_size = 32
-
-trainloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
-
-testloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False)
-
 
 class ReLU:
     def forward(self, inputs):
@@ -121,6 +103,20 @@ class Dense:
         self.b_output = np.dot(b_input, self.weights.T)
         return self.b_output
 
+# convert data to a normalized torch.FloatTensor
+transform = transforms.Compose([ transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+# choose the training and test datasets
+train_data = datasets.CIFAR10('data', train=True, download=True, transform=transform)
+test_data = datasets.CIFAR10('data', train=False, download=True, transform=transform)
+# You should define x_train and y_train
+
+batch_size = 32
+
+trainloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
+
+testloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False)
+
 
 feature_extractor = resnet34(pretrained=True)
 num_features = feature_extractor.fc.in_features
@@ -131,9 +127,6 @@ Layer1 = Dense(num_features, 20)
 Act1 = ReLU()
 Layer2 = Dense(20, 10)
 Act2 = Softmax()
-
-# summary(feature_extractor, (32,32,3))
-
 
 Loss = Categorical_Cross_Entropy_loss()
 Optimizer = SGD(learning_rate=0.001)
@@ -238,6 +231,13 @@ plt.ylabel("Actual")
 plt.title("Confusion Matrix for the training set")
 plt.show()
 
+# Calculate the precision and recall for each class
+precision = np.diag(cm_train) / np.sum(cm_train, axis=0)
+recall = np.diag(cm_train) / np.sum(cm_train, axis=1)
+
+# Calculate the F1 score for each class
+f1 = 2 * (precision * recall) / (precision + recall)
+
 #Confusion Matrix for the test set
 cm_test = confusion_matrix(y_test_plot_t, y_predicted_plot_t)
 plt.subplots(figsize=(10, 6))
@@ -246,3 +246,10 @@ plt.xlabel("Predicted")
 plt.ylabel("Actual")
 plt.title("Confusion Matrix for the testing set")
 plt.show()
+
+# Calculate the precision and recall for each class
+precision = np.diag(cm_test) / np.sum(cm_test, axis=0)
+recall = np.diag(cm_test) / np.sum(cm_test, axis=1)
+
+# Calculate the F1 score for each class
+f1 = 2 * (precision * recall) / (precision + recall)
