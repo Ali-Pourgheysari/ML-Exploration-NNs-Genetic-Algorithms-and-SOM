@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sb
 # torch is just for the feature extractor and the dataset (NOT FOR IMPLEMENTING NEURAL NETWORKS!)
 import torch
 from torchsummary import summary
@@ -85,10 +86,10 @@ class Categorical_Cross_Entropy_loss:
         return self.output
 
     def backward(self,softmax_output, class_label):
-        grad_softmax = softmax_output.copy()
-        grad_softmax[range(len(class_label)), class_label] -= 1
-        grad = grad_softmax / len(class_label)
-        self.b_output = grad
+        one_hot_encoded = np.zeros((len(softmax_output), len(softmax_output[0])))
+        for i, row in enumerate(one_hot_encoded):
+          row[class_label[i]] = 1
+        self.b_output = - one_hot_encoded / softmax_output
         return self.b_output
 
 
@@ -141,16 +142,18 @@ Optimizer = SGD(learning_rate=0.001)
 for param in feature_extractor.parameters():
     param.requires_grad = False
 feature_extractor.fc.requires_grad = True
-
+maximum = 0
+y_predicted_plot = []
+y_train_plot = []
 #Main Loop of Training
 for epoch in range(20):
   # loss = 0
+  c = 0
   for i, (x_train, y_train) in enumerate(trainloader):
     # Convert the input image to a PyTorch tensor
     input_tensor = torch.tensor(x_train).float()
     # Add a batch dimension to the input tensor
     input_tensor = input_tensor.unsqueeze(0)
-    # print(f'row: {len(input_tensor)}, col: {len(input_tensor[0])}')
     output = feature_extractor(*input_tensor)
 
     #forward
@@ -161,12 +164,22 @@ for epoch in range(20):
     loss = Loss.forward(Act2.output,y_train)
     
     # Report
-    y_predict = np.argmax(Act2.output,axis = 1)
-    accuracy = np.mean(y_train == y_predict)
-    print(f'Epoch:{epoch}')
+    y_predict = list(np.argmax(Act2.output,axis = 1))
+    counter = 0
+    for i in range(len(y_train)):
+      y_train_plot.append(int(y_train[i]))
+      y_predicted_plot.append(y_predict[i])
+      if int(y_train[i]) == y_predict[i]:
+        counter += 1
+    accuracy = (counter / batch_size) * 100
+    if accuracy > maximum:
+      maximum = accuracy
+    print(f'epoch: {epoch}, batch: {c} of {50000//batch_size}, {accuracy}%, max: {maximum}%')
     print(f'Loss: {loss}')
-    print(f'Accuracy: {accuracy}')
     print('--------------------------')
+    c += 1
+    # print(f'Epoch:{epoch}')
+    # print(f'Accuracy: {accuracy}')
     
     #backward
     Loss.backward(Act2.output,y_train)
@@ -178,10 +191,46 @@ for epoch in range(20):
     #update params
     Optimizer.update(Layer1)
     Optimizer.update(Layer2)
-  
 
+print('--------------------------------------------TESTING PHASE--------------------------------------------')
+
+maximum = 0
+c = 0
+y_predicted_plot_t = []
+y_test_plot_t = []
+
+# Loop of testing
+for i, (x_test, y_test) in enumerate(testloader):
+    # Convert the input image to a PyTorch tensor
+    input_tensor = torch.tensor(x_test).float()
+    # Add a batch dimension to the input tensor
+    input_tensor = input_tensor.unsqueeze(0)
+    output = feature_extractor(*input_tensor)
+
+    #forward
+    Layer1.forward(output)
+    Act1.forward(Layer1.output)
+    Layer2.forward(Act1.output)
+    Act2.forward(Layer2.output)
+    loss = Loss.forward(Act2.output,y_test)
+    
+    # Report
+    y_predict = list(np.argmax(Act2.output,axis = 1))
+    counter = 0
+    for i in range(len(y_test)):
+      y_test_plot_t.append(int(y_test[i]))
+      y_predicted_plot_t.append(y_predict[i])
+      if int(y_train[i]) == y_predict[i]:
+        counter += 1
+    accuracy = (counter / batch_size) * 100
+    if accuracy > maximum:
+      maximum = accuracy
+    print(f'epoch: {epoch}, batch: {c} of {50000//batch_size}, {accuracy}%, max: {maximum}%')
+    print(f'Loss: {loss}')
+    print('--------------------------')
+    
 #Confusion Matrix for the training set
-cm_train = confusion_matrix(y_train, y_predict)
+cm_train = confusion_matrix(y_train_plot, y_predicted_plot)
 plt.subplots(figsize=(10, 6))
 sb.heatmap(cm_train, annot = True, fmt = 'g')
 plt.xlabel("Predicted")
@@ -190,4 +239,10 @@ plt.title("Confusion Matrix for the training set")
 plt.show()
 
 #Confusion Matrix for the test set
-# // To Do
+cm_test = confusion_matrix(y_test_plot_t, y_predicted_plot_t)
+plt.subplots(figsize=(10, 6))
+sb.heatmap(cm_test, annot = True, fmt = 'g')
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix for the testing set")
+plt.show()
